@@ -1,9 +1,7 @@
-// 1) Create a Supabase project.
-// 2) In Supabase Dashboard > Connect, copy Project URL and Publishable key.
-// 3) Paste them below.
-//
-// IMPORTANT: use the Publishable key only. NEVER put a Supabase Secret key here.
+// GiftBox Pro frontend configuration.
+// Use ONLY your Supabase Project URL and Publishable key here.
+// NEVER put service_role / sb_secret keys in browser code.
 window.GIFTBOX_CONFIG = {
-  SUPABASE_URL: "https://tyvnyvmzmxrqyiuvtqed.supabase.co",
-  SUPABASE_KEY: "sb_publishable_D-Jyce7GoHlGzQSSK654XQ_1wg94I8T"
+  SUPABASE_URL: "PASTE_YOUR_SUPABASE_URL_HERE",
+  SUPABASE_KEY: "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE"
 };
