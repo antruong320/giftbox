@@ -105,10 +105,7 @@ $("signupBtn").onclick=async()=>{
     msg("Tạo tài khoản thành công. Có thể đăng nhập.","ok");
   }
 };
-$("verifyBtn").onclick=async()=>{
-  const {data,error}=await sb.auth.verifyOtp({email:$("email").value.trim(),token:$("otp").value.trim(),type:"email"});
-  if(error)return msg(error.message,"error"); showApp(data.user);
-};
+
 async function showApp(user){$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("userEmail").textContent=user.email;loadGifts()}
 $("logout").onclick=async()=>{await sb.auth.signOut();location.reload()};
 async function upload(file,userId,giftId,type){
