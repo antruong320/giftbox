@@ -1,145 +1,1044 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070707">
-<title>GiftBox — Tạo món quà</title>
+<meta name="theme-color" content="#050505">
+<title>GiftBox ❤️</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#060606;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif}
-.wrap{max-width:720px;margin:auto;padding:20px}.card{margin:25px auto;background:#141414;border:1px solid #333;border-radius:24px;padding:24px;box-shadow:0 25px 80px #000}
-.logo{font-size:22px;font-weight:900}h1{font-size:32px;margin:10px 0 20px}h2{font-size:20px}
-input,textarea,button{width:100%;padding:14px;border-radius:13px;font:inherit}input,textarea{margin:7px 0 14px;background:#090909;color:#fff;border:1px solid #444}textarea{min-height:130px;resize:vertical}button{background:#fff;color:#111;border:0;font-weight:800;margin-top:5px}
-.secondary{background:#222;color:#fff;border:1px solid #444}.muted{color:#aaa}.hidden{display:none!important}.row{display:flex;gap:10px}.row>*{flex:1}
-.item{border-top:1px solid #333;padding:15px 0}.url{word-break:break-all;background:#0b0b0b;border-radius:10px;padding:10px;margin:8px 0;color:#ddd}.qr{background:#fff;padding:10px;border-radius:12px;width:220px;margin:15px auto}.center{text-align:center}.error{color:#ff9090}.ok{color:#a8ffb1}
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  min-height:100%;
+  background:#030303;
+  color:#fff;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+body{
+  overflow-x:hidden;
+  min-height:100vh;
+}
+
+/* =========================
+   BACKGROUND
+========================= */
+
+.bg{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      #24151a 0%,
+      #0c090a 35%,
+      #030303 72%
+    );
+}
+
+.bg::before{
+  content:"";
+  position:absolute;
+  width:75vw;
+  height:75vw;
+  max-width:700px;
+  max-height:700px;
+  left:50%;
+  top:25%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(
+    circle,
+    rgba(255,255,255,.10),
+    rgba(255,255,255,.025) 35%,
+    transparent 70%
+  );
+  filter:blur(25px);
+  animation:pulse 5s ease-in-out infinite;
+}
+
+@keyframes pulse{
+  0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.9)}
+  50%{opacity:.8;transform:translate(-50%,-50%) scale(1.1)}
+}
+
+/* Stars */
+
+.stars{
+  position:fixed;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+
+.star{
+  position:absolute;
+  width:2px;
+  height:2px;
+  border-radius:50%;
+  background:#fff;
+  opacity:.25;
+  animation:twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle{
+  0%,100%{opacity:.15;transform:scale(.8)}
+  50%{opacity:.8;transform:scale(1.8)}
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.page{
+  position:relative;
+  z-index:5;
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:
+    max(25px,env(safe-area-inset-top))
+    20px
+    max(30px,env(safe-area-inset-bottom));
+}
+
+.container{
+  width:100%;
+  max-width:650px;
+  text-align:center;
+}
+
+/* =========================
+   LOADING
+========================= */
+
+.loading{
+  color:#aaa;
+  font-size:16px;
+  animation:loadingPulse 1.5s infinite;
+}
+
+@keyframes loadingPulse{
+  0%,100%{opacity:.4}
+  50%{opacity:1}
+}
+
+/* =========================
+   INTRO
+========================= */
+
+.intro{
+  animation:fadeUp .9s ease both;
+}
+
+.intro-label{
+  color:#aaa;
+  font-size:15px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:18px;
+}
+
+.intro-title{
+  font-size:clamp(38px,11vw,72px);
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-3px;
+  margin:0;
+  background:linear-gradient(
+    180deg,
+    #fff 0%,
+    #f4f4f4 45%,
+    #aaa 100%
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:
+    0 0 25px rgba(255,255,255,.15);
+}
+
+.intro-heart{
+  font-size:58px;
+  margin:22px 0;
+  display:inline-block;
+  filter:drop-shadow(0 0 20px rgba(255,255,255,.3));
+  animation:heartBeat 1.8s ease-in-out infinite;
+}
+
+@keyframes heartBeat{
+  0%,100%{transform:scale(1)}
+  15%{transform:scale(1.15)}
+  30%{transform:scale(1)}
+  45%{transform:scale(1.08)}
+}
+
+.recipient{
+  color:#ddd;
+  font-size:18px;
+  margin-bottom:35px;
+}
+
+.recipient strong{
+  color:#fff;
+  font-weight:800;
+}
+
+.open-btn{
+  position:relative;
+  width:auto;
+  min-width:220px;
+  padding:17px 30px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:18px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-size:17px;
+  font-weight:800;
+  cursor:pointer;
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  box-shadow:
+    0 15px 45px rgba(0,0,0,.45),
+    inset 0 1px rgba(255,255,255,.15);
+  transition:.25s ease;
+  overflow:hidden;
+}
+
+.open-btn::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-120%;
+  width:80%;
+  height:100%;
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.25),
+    transparent
+  );
+  transform:skewX(-20deg);
+  animation:shine 3s infinite;
+}
+
+@keyframes shine{
+  0%{left:-120%}
+  40%,100%{left:140%}
+}
+
+.open-btn:active{
+  transform:scale(.95);
+}
+
+/* =========================
+   GIFT CONTENT
+========================= */
+
+.gift-content{
+  display:none;
+  animation:fadeUp 1s ease both;
+}
+
+.gift-content.show{
+  display:block;
+}
+
+.greeting{
+  color:#aaa;
+  font-size:14px;
+  letter-spacing:1.5px;
+  margin-bottom:10px;
+}
+
+.main-title{
+  margin:0 0 28px;
+  font-size:clamp(34px,9vw,60px);
+  line-height:1.05;
+  font-weight:900;
+  letter-spacing:-2px;
+}
+
+.main-title span{
+  display:block;
+  background:linear-gradient(
+    135deg,
+    #fff,
+    #ddd,
+    #888
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* =========================
+   PHOTO
+========================= */
+
+.photo-wrap{
+  position:relative;
+  width:min(470px,92vw);
+  margin:0 auto 30px;
+  padding:7px;
+  border-radius:26px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.45),
+      rgba(255,255,255,.04),
+      rgba(255,255,255,.2)
+    );
+  box-shadow:
+    0 25px 80px rgba(0,0,0,.65),
+    0 0 60px rgba(255,255,255,.08);
+}
+
+.photo{
+  display:block;
+  width:100%;
+  max-height:55vh;
+  object-fit:contain;
+  border-radius:20px;
+  background:#080808;
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+.message-card{
+  position:relative;
+  padding:28px 22px;
+  margin:0 auto 25px;
+  width:min(570px,94vw);
+  border-radius:25px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.045);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+
+.message-card::before{
+  content:"“";
+  position:absolute;
+  top:-22px;
+  left:20px;
+  font-size:80px;
+  color:rgba(255,255,255,.08);
+  font-family:Georgia,serif;
+}
+
+.message{
+  color:#eee;
+  font-size:19px;
+  line-height:1.8;
+  white-space:pre-line;
+  min-height:30px;
+}
+
+/* =========================
+   AUDIO
+========================= */
+
+.music{
+  margin:20px auto 30px;
+  width:min(430px,90vw);
+}
+
+audio{
+  width:100%;
+  opacity:.9;
+}
+
+/* =========================
+   FINAL
+========================= */
+
+.final{
+  margin-top:35px;
+  padding-bottom:20px;
+}
+
+.final-heart{
+  font-size:42px;
+  margin-bottom:12px;
+}
+
+.final-text{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.7;
+}
+
+.final-text strong{
+  color:#fff;
+}
+
+/* =========================
+   HEARTS
+========================= */
+
+.heart{
+  position:fixed;
+  bottom:-50px;
+  z-index:20;
+  pointer-events:none;
+  font-size:22px;
+  animation:floatHeart linear forwards;
+}
+
+@keyframes floatHeart{
+  0%{
+    transform:translateY(0) scale(.7) rotate(0);
+    opacity:0;
+  }
+
+  10%{
+    opacity:1;
+  }
+
+  100%{
+    transform:
+      translateY(-115vh)
+      translateX(var(--drift))
+      scale(1.5)
+      rotate(25deg);
+    opacity:0;
+  }
+}
+
+/* =========================
+   CONFETTI
+========================= */
+
+.confetti{
+  position:fixed;
+  top:-20px;
+  z-index:30;
+  pointer-events:none;
+  width:7px;
+  height:12px;
+  animation:confettiFall linear forwards;
+}
+
+@keyframes confettiFall{
+  to{
+    transform:
+      translateY(115vh)
+      rotate(720deg);
+    opacity:0;
+  }
+}
+
+/* =========================
+   TRANSITION
+========================= */
+
+.fade-out{
+  animation:fadeOut .6s ease forwards;
+}
+
+@keyframes fadeOut{
+  to{
+    opacity:0;
+    transform:scale(.96);
+  }
+}
+
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(25px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+.hidden{
+  display:none!important;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:500px){
+
+  .page{
+    align-items:flex-start;
+    padding-top:100px;
+  }
+
+  .intro-title{
+    letter-spacing:-2px;
+  }
+
+  .intro-heart{
+    font-size:50px;
+    margin:18px 0;
+  }
+
+  .recipient{
+    font-size:16px;
+  }
+
+  .main-title{
+    margin-bottom:24px;
+  }
+
+  .message-card{
+    padding:25px 18px;
+  }
+
+  .message{
+    font-size:18px;
+    line-height:1.75;
+  }
+}
 </style>
 </head>
+
 <body>
-<div class="wrap">
-<section id="auth" class="card">
-  <div class="logo">🎁 GiftBox</div>
-  <h1>Tạo quà bằng iPhone</h1>
-  <p class="muted">Đăng nhập bằng email. Sau đó bạn có thể tạo từng món quà và nhận link riêng.</p>
-  <input id="email" type="email" placeholder="Email của bạn">
 
-<input id="password" type="password" placeholder="Mật khẩu">
+<!-- BACKGROUND -->
+<div class="bg"></div>
+<div class="stars" id="stars"></div>
 
-<button id="loginBtn">Đăng nhập</button>
+<main class="page">
 
-<button id="signupBtn" class="secondary">
-  Tạo tài khoản
-</button>
-  <p id="authMsg"></p>
-</section>
+  <div class="container">
 
-<section id="app" class="card hidden">
-  <div class="row"><div><div class="logo">🎁 GiftBox</div><div class="muted" id="userEmail"></div></div><button class="secondary" id="logout">Đăng xuất</button></div>
-  <h1>Tạo món quà</h1>
-  <form id="giftForm">
-    <input id="recipient" maxlength="100" required placeholder="Tên người nhận">
-    <input id="occasion" maxlength="100" value="Happy Birthday" placeholder="Dịp">
-    <textarea id="message" maxlength="5000" required placeholder="Lời nhắn"></textarea>
-    <label>🖼️ Ảnh</label><input id="photo" type="file" accept="image/*">
-    <label>🎵 Nhạc</label><input id="music" type="file" accept="audio/*">
-    <button id="createBtn">✨ Tạo Gift Box</button>
-  </form>
-  <div id="result" class="card hidden center"></div>
-  <h2>Quà của tôi</h2>
-  <div id="list"></div>
-</section>
-</div>
+    <!-- LOADING -->
+    <div id="loading" class="loading">
+      Đang chuẩn bị món quà... ✨
+    </div>
+
+
+    <!-- INTRO -->
+    <section id="intro" class="intro hidden">
+
+      <div class="intro-label">
+        💌 Một món quà đặc biệt
+      </div>
+
+      <h1 class="intro-title">
+        Dành riêng<br>
+        cho bạn
+      </h1>
+
+      <div class="intro-heart">
+        ❤️
+      </div>
+
+      <div class="recipient">
+        Một món quà được chuẩn bị riêng cho
+        <strong id="recipientName"></strong>
+      </div>
+
+      <button id="openBtn" class="open-btn">
+        🎁 &nbsp; Mở món quà
+      </button>
+
+    </section>
+
+
+    <!-- GIFT -->
+    <section id="giftContent" class="gift-content">
+
+      <div class="greeting">
+        💌 Món quà dành riêng cho
+      </div>
+
+      <h1 class="main-title">
+        <span id="occasion"></span>
+        <span id="giftRecipient"></span>
+      </h1>
+
+
+      <!-- PHOTO -->
+      <div id="photoWrap" class="photo-wrap hidden">
+        <img id="photo" class="photo" alt="Ảnh món quà">
+      </div>
+
+
+      <!-- MESSAGE -->
+      <div class="message-card">
+        <div id="message" class="message"></div>
+      </div>
+
+
+      <!-- MUSIC -->
+      <div id="musicWrap" class="music hidden">
+        <audio id="audio" controls loop></audio>
+      </div>
+
+
+      <!-- FINAL -->
+      <div class="final">
+
+        <div class="final-heart">
+          ❤️
+        </div>
+
+        <div class="final-text">
+          Món quà này được tạo riêng cho<br>
+          <strong id="finalRecipient"></strong>
+          <br><br>
+          Chúc bạn luôn vui vẻ và hạnh phúc ✨
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+</main>
+
 
 <script src="config.js"></script>
+
 <script>
-const cfg=window.GIFTBOX_CONFIG;
-if(!cfg || cfg.SUPABASE_URL.includes("PASTE_")) document.body.insertAdjacentHTML("afterbegin",
-'<div style="padding:12px;background:#5b1616;color:white;text-align:center">Hãy mở config.js và điền Supabase URL + Publishable Key trước.</div>');
-const sb=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_KEY);
-const $=id=>document.getElementById(id);
-function msg(t,cls=""){ $("authMsg").className=cls;$("authMsg").textContent=t }
-$("loginBtn").onclick=async()=>{
-  const email=$("email").value.trim();
-  const password=$("password").value;
 
-  if(!email || !password){
-    return msg("Nhập email và mật khẩu.");
+const sb = supabase.createClient(
+  GIFTBOX_CONFIG.SUPABASE_URL,
+  GIFTBOX_CONFIG.SUPABASE_KEY
+);
+
+const params = new URLSearchParams(location.search);
+const giftId = params.get("id");
+
+const loading = document.getElementById("loading");
+const intro = document.getElementById("intro");
+const giftContent = document.getElementById("giftContent");
+
+const recipientName = document.getElementById("recipientName");
+const giftRecipient = document.getElementById("giftRecipient");
+const finalRecipient = document.getElementById("finalRecipient");
+const occasion = document.getElementById("occasion");
+
+const message = document.getElementById("message");
+
+const photoWrap = document.getElementById("photoWrap");
+const photo = document.getElementById("photo");
+
+const musicWrap = document.getElementById("musicWrap");
+const audio = document.getElementById("audio");
+
+const openBtn = document.getElementById("openBtn");
+
+
+/* =========================
+   LOAD GIFT
+========================= */
+
+async function loadGift(){
+
+  if(!giftId){
+
+    loading.textContent =
+      "Link món quà không hợp lệ 💔";
+
+    return;
   }
 
-  const {data,error}=await sb.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    return msg(error.message,"error");
-  }
-
-  showApp(data.user);
-};
-
-
-$("signupBtn").onclick=async()=>{
-  const email=$("email").value.trim();
-  const password=$("password").value;
-
-  if(!email || !password){
-    return msg("Nhập email và mật khẩu.");
-  }
-
-  if(password.length < 6){
-    return msg("Mật khẩu phải có ít nhất 6 ký tự.");
-  }
-
-  const {data,error}=await sb.auth.signUp({
-    email,
-    password
-  });
-
-  if(error){
-    return msg(error.message,"error");
-  }
-
-  if(data.user){
-    msg("Tạo tài khoản thành công. Có thể đăng nhập.","ok");
-  }
-};
-
-async function showApp(user){$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("userEmail").textContent=user.email;loadGifts()}
-$("logout").onclick=async()=>{await sb.auth.signOut();location.reload()};
-async function upload(file,userId,giftId,type){
-  if(!file)return null;
-  if(file.size>6*1024*1024) throw Error("Ảnh/nhạc tối đa 6MB ở bản V1.");
-  const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"");
-  const path=`${userId}/${giftId}/${type}.${ext}`;
-  const {error}=await sb.storage.from("gift-media").upload(path,file,{upsert:false,contentType:file.type});
-  if(error)throw error;
-  return sb.storage.from("gift-media").getPublicUrl(path).data.publicUrl;
-}
-$("giftForm").onsubmit=async e=>{
-  e.preventDefault();$("createBtn").disabled=true;$("createBtn").textContent="Đang tạo...";
   try{
-    const {data:{user}}=await sb.auth.getUser(); if(!user)throw Error("Phiên đăng nhập đã hết.");
-    const id=crypto.randomUUID();
-    let photo_url=null,music_url=null;
-    photo_url=await upload($("photo").files[0],user.id,id,"photo");
-    music_url=await upload($("music").files[0],user.id,id,"music");
-    const {error}=await sb.from("gifts").insert({id,owner_id:user.id,recipient:$("recipient").value.trim(),occasion:$("occasion").value.trim()||"Happy Birthday",message:$("message").value.trim(),photo_url,music_url});
-    if(error)throw error;
-    const url=new URL("gift.html",location.href);url.searchParams.set("id",id);
-    showResult(url.href);$("giftForm").reset();$("occasion").value="Happy Birthday";loadGifts();
-  }catch(err){alert(err.message)}
-  finally{$("createBtn").disabled=false;$("createBtn").textContent="✨ Tạo Gift Box"}
-};
-function showResult(url){$("result").classList.remove("hidden");$("result").innerHTML=`<h2>🎉 Đã tạo món quà!</h2><div class="url">${url}</div><div id="qrcode" class="qr"></div><button onclick="navigator.clipboard.writeText('${url}')">📋 Sao chép link</button><button class="secondary" onclick="location.href='${url}'">Mở món quà</button>`;new QRCode(document.getElementById("qrcode"),{text:url,width:200,height:200})}
-async function loadGifts(){
- const {data,error}=await sb.from("gifts").select("id,recipient,occasion,created_at").order("created_at",{ascending:false});
- if(error){$("list").textContent=error.message;return}
- $("list").innerHTML=data.length?data.map(g=>{const u=new URL("gift.html",location.href);u.searchParams.set("id",g.id);return `<div class="item"><b>${esc(g.recipient)}</b> · ${esc(g.occasion)}<div class="url">${u.href}</div><button onclick="navigator.clipboard.writeText('${u.href}')">Sao chép link</button></div>`}).join(""):'<p class="muted">Chưa có món quà.</p>';
+
+    const {data,error} = await sb.rpc(
+      "get_gift_public",
+      {
+        p_id:giftId
+      }
+    );
+
+    if(error){
+      console.error(error);
+
+      loading.textContent =
+        "Không thể tải món quà 😢";
+
+      return;
+    }
+
+    if(!data || !data.length){
+
+      loading.textContent =
+        "Không tìm thấy món quà 💔";
+
+      return;
+    }
+
+    const gift = data[0];
+
+    /*
+      Hiển thị thông tin
+    */
+
+    const recipient =
+      gift.recipient || "bạn";
+
+    const event =
+      gift.occasion || "Một món quà";
+
+    recipientName.textContent = recipient;
+    giftRecipient.textContent = recipient;
+    finalRecipient.textContent = recipient;
+    occasion.textContent = event;
+
+
+    /*
+      Ảnh
+    */
+
+    if(gift.photo_url){
+
+      photo.src = gift.photo_url;
+
+      photo.onload = () => {
+        photoWrap.classList.remove("hidden");
+      };
+
+      photo.onerror = () => {
+        photoWrap.classList.add("hidden");
+      };
+
+    }
+
+
+    /*
+      Nhạc
+    */
+
+    if(gift.music_url){
+
+      audio.src = gift.music_url;
+      musicWrap.classList.remove("hidden");
+
+    }
+
+
+    /*
+      Lưu lời nhắn
+    */
+
+    message.textContent =
+      gift.message || "";
+
+
+    /*
+      Chuyển màn hình
+    */
+
+    loading.classList.add("hidden");
+    intro.classList.remove("hidden");
+
+  }
+  catch(err){
+
+    console.error(err);
+
+    loading.textContent =
+      "Có lỗi xảy ra khi tải món quà 😢";
+
+  }
+
 }
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-(async()=>{const {data}=await sb.auth.getUser();if(data.user)showApp(data.user)})();
+
+
+/* =========================
+   OPEN GIFT
+========================= */
+
+openBtn.addEventListener("click",async()=>{
+
+  openBtn.disabled = true;
+
+  /*
+    Hiệu ứng nút
+  */
+
+  openBtn.classList.add("fade-out");
+
+  /*
+    Pháo giấy
+  */
+
+  createConfetti();
+
+  /*
+    Tim bay
+  */
+
+  createHearts();
+
+
+  /*
+    Đợi một chút rồi chuyển màn hình
+  */
+
+  setTimeout(()=>{
+
+    intro.classList.add("hidden");
+
+    giftContent.classList.add("show");
+
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
+
+    /*
+      Hiệu ứng chữ
+    */
+
+    typeMessage();
+
+    /*
+      Phát nhạc
+      iPhone yêu cầu người dùng
+      tương tác trước nên ở đây
+      khả năng autoplay cao hơn.
+    */
+
+    if(audio.src){
+
+      audio.play().catch(()=>{
+
+        /*
+          Nếu iPhone vẫn chặn autoplay,
+          controls vẫn hiện để người nhận
+          tự bấm Play.
+        */
+
+      });
+
+    }
+
+  },550);
+
+});
+
+
+/* =========================
+   TYPE MESSAGE
+========================= */
+
+let typed = false;
+
+function typeMessage(){
+
+  if(typed) return;
+
+  typed = true;
+
+  const text = message.textContent;
+
+  message.textContent = "";
+
+  let index = 0;
+
+  function next(){
+
+    if(index >= text.length){
+
+      return;
+    }
+
+    message.textContent += text[index];
+
+    index++;
+
+    let delay = 24;
+
+    /*
+      Xuống dòng chậm hơn
+    */
+
+    if(text[index-1] === "\n"){
+      delay = 120;
+    }
+
+    setTimeout(next,delay);
+
+  }
+
+  next();
+
+}
+
+
+/* =========================
+   HEARTS
+========================= */
+
+function createHearts(){
+
+  const emojis = [
+    "❤️",
+    "💗",
+    "💖",
+    "💕",
+    "✨",
+    "🌹"
+  ];
+
+  for(let i=0;i<45;i++){
+
+    setTimeout(()=>{
+
+      const heart =
+        document.createElement("div");
+
+      heart.className = "heart";
+
+      heart.textContent =
+        emojis[
+          Math.floor(
+            Math.random()*emojis.length
+          )
+        ];
+
+      heart.style.left =
+        Math.random()*100 + "vw";
+
+      heart.style.setProperty(
+        "--drift",
+        (Math.random()*160-80) + "px"
+      );
+
+      heart.style.animationDuration =
+        (4 + Math.random()*4) + "s";
+
+      heart.style.fontSize =
+        (16 + Math.random()*22) + "px";
+
+      document.body.appendChild(heart);
+
+      setTimeout(()=>{
+        heart.remove();
+      },9000);
+
+    },i*70);
+
+  }
+
+}
+
+
+/* =========================
+   CONFETTI
+========================= */
+
+function createConfetti(){
+
+  for(let i=0;i<100;i++){
+
+    setTimeout(()=>{
+
+      const c =
+        document.createElement("div");
+
+      c.className = "confetti";
+
+      c.style.left =
+        Math.random()*100 + "vw";
+
+      c.style.width =
+        (4 + Math.random()*5) + "px";
+
+      c.style.height =
+        (7 + Math.random()*8) + "px";
+
+      c.style.opacity =
+        .5 + Math.random()*.5;
+
+      c.style.animationDuration =
+        (2.5 + Math.random()*3) + "s";
+
+      c.style.transform =
+        `rotate(${Math.random()*360}deg)`;
+
+      /*
+        Dùng filter thay vì cố định màu,
+        để hiệu ứng vẫn hợp nền.
+      */
+
+      document.body.appendChild(c);
+
+      setTimeout(()=>{
+        c.remove();
+      },6000);
+
+    },i*15);
+
+  }
+
+}
+
+
+/* =========================
+   STARS
+========================= */
+
+function createStars(){
+
+  const container =
+    document.getElementById("stars");
+
+  for(let i=0;i<80;i++){
+
+    const star =
+      document.createElement("div");
+
+    star.className = "star";
+
+    star.style.left =
+      Math.random()*100 + "%";
+
+    star.style.top =
+      Math.random()*100 + "%";
+
+    star.style.animationDelay =
+      Math.random()*4 + "s";
+
+    star.style.animationDuration =
+      (2 + Math.random()*4) + "s";
+
+    container.appendChild(star);
+
+  }
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+createStars();
+loadGift();
+
 </script>
+
 </body>
 </html>
