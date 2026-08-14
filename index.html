@@ -59,11 +59,51 @@ if(!cfg || cfg.SUPABASE_URL.includes("PASTE_")) document.body.insertAdjacentHTML
 const sb=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 function msg(t,cls=""){ $("authMsg").className=cls;$("authMsg").textContent=t }
-$("sendBtn").onclick=async()=>{
-  const email=$("email").value.trim(); if(!email)return msg("Nhập email trước.");
-  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
-  if(error)return msg(error.message,"error");
-  $("otp").classList.remove("hidden");$("verifyBtn").classList.remove("hidden");msg("Đã gửi mã. Kiểm tra email.");
+$("loginBtn").onclick=async()=>{
+  const email=$("email").value.trim();
+  const password=$("password").value;
+
+  if(!email || !password){
+    return msg("Nhập email và mật khẩu.");
+  }
+
+  const {data,error}=await sb.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    return msg(error.message,"error");
+  }
+
+  showApp(data.user);
+};
+
+
+$("signupBtn").onclick=async()=>{
+  const email=$("email").value.trim();
+  const password=$("password").value;
+
+  if(!email || !password){
+    return msg("Nhập email và mật khẩu.");
+  }
+
+  if(password.length < 6){
+    return msg("Mật khẩu phải có ít nhất 6 ký tự.");
+  }
+
+  const {data,error}=await sb.auth.signUp({
+    email,
+    password
+  });
+
+  if(error){
+    return msg(error.message,"error");
+  }
+
+  if(data.user){
+    msg("Tạo tài khoản thành công. Có thể đăng nhập.","ok");
+  }
 };
 $("verifyBtn").onclick=async()=>{
   const {data,error}=await sb.auth.verifyOtp({email:$("email").value.trim(),token:$("otp").value.trim(),type:"email"});
