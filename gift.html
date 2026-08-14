@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#030303">
+<title>GiftBox ❤️</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#030303;color:#fff;font-family:Inter,system-ui,sans-serif;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;opacity:.2}.wrap{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:25px}.box{max-width:800px}.small{color:#bbb}.title{font-size:clamp(42px,12vw,90px);font-weight:900;line-height:1.02;text-shadow:0 0 20px #fff,0 0 55px #aaa;margin:20px 0 28px}.btn{padding:15px 26px;border:0;border-radius:13px;font-size:17px;font-weight:800}.hidden{display:none!important}.msg{font-size:20px;line-height:1.75;white-space:pre-line}.photo{max-width:min(430px,90vw);max-height:40vh;object-fit:contain;border-radius:22px;margin:15px auto;box-shadow:0 0 40px #ffffff22}.audio{width:min(430px,90vw);margin:15px auto}.heart{position:fixed;bottom:-30px;font-size:28px;z-index:4;animation:up 5s linear forwards}@keyframes up{to{transform:translateY(-115vh) rotate(35deg) scale(1.7);opacity:0}}
+</style>
+</head>
+<body><canvas id="c"></canvas><main class="wrap"><div class="box" id="loading">Đang chuẩn bị món quà... ✨</div><div class="box hidden" id="gift"><div class="small">💌 Một món quà dành riêng cho</div><div id="title" class="title"></div><button id="open" class="btn">Mở món quà 🎁</button><div id="content" class="hidden"><img id="photo" class="photo hidden"><div id="msg" class="msg"></div><audio id="audio" class="audio hidden" controls loop></audio></div></div></main>
+<script src="config.js"></script><script>
+const sb=supabase.createClient(GIFTBOX_CONFIG.SUPABASE_URL,GIFTBOX_CONFIG.SUPABASE_KEY),id=new URLSearchParams(location.search).get("id");
+async function run(){if(!id){loading.textContent="Link không hợp lệ.";return}const {data,error}=await sb.rpc("get_gift_public",{p_id:id});if(error||!data?.length){loading.textContent="Không tìm thấy món quà.";return}const g=data[0];title.textContent=`${g.occasion} ${g.recipient} ❤️`;msg.textContent=g.message;if(g.photo_url){photo.src=g.photo_url;photo.classList.remove("hidden")}if(g.music_url){audio.src=g.music_url;audio.classList.remove("hidden")}loading.classList.add("hidden");gift.classList.remove("hidden");open.onclick=()=>{open.classList.add("hidden");content.classList.remove("hidden");hearts();audio.play().catch(()=>{})}}run();
+function hearts(){for(let i=0;i<60;i++)setTimeout(()=>{let x=document.createElement("div");x.className="heart";x.textContent=["❤️","💗","💖","✨","🌹"][Math.floor(Math.random()*5)];x.style.left=Math.random()*100+"vw";x.style.animationDuration=3+Math.random()*4+"s";document.body.appendChild(x);setTimeout(()=>x.remove(),7500)},i*45)}
+const c=document.getElementById("c"),x=c.getContext("2d");let w,h,d;function rs(){w=c.width=innerWidth;h=c.height=innerHeight;d=Array(Math.ceil(w/14)).fill(1)}rs();onresize=rs;setInterval(()=>{x.fillStyle="rgba(3,3,3,.15)";x.fillRect(0,0,w,h);x.fillStyle="#aaa";x.font="14px monospace";d.forEach((y,i)=>{x.fillText(String.fromCharCode(0x30A0+Math.random()*96),i*14,y*14);if(y*14>h&&Math.random()>.975)d[i]=0;d[i]++})},55);
+</script></body></html>

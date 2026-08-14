@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070707">
+<title>GiftBox — Tạo món quà</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#060606;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif}
+.wrap{max-width:720px;margin:auto;padding:20px}.card{margin:25px auto;background:#141414;border:1px solid #333;border-radius:24px;padding:24px;box-shadow:0 25px 80px #000}
+.logo{font-size:22px;font-weight:900}h1{font-size:32px;margin:10px 0 20px}h2{font-size:20px}
+input,textarea,button{width:100%;padding:14px;border-radius:13px;font:inherit}input,textarea{margin:7px 0 14px;background:#090909;color:#fff;border:1px solid #444}textarea{min-height:130px;resize:vertical}button{background:#fff;color:#111;border:0;font-weight:800;margin-top:5px}
+.secondary{background:#222;color:#fff;border:1px solid #444}.muted{color:#aaa}.hidden{display:none!important}.row{display:flex;gap:10px}.row>*{flex:1}
+.item{border-top:1px solid #333;padding:15px 0}.url{word-break:break-all;background:#0b0b0b;border-radius:10px;padding:10px;margin:8px 0;color:#ddd}.qr{background:#fff;padding:10px;border-radius:12px;width:220px;margin:15px auto}.center{text-align:center}.error{color:#ff9090}.ok{color:#a8ffb1}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section id="auth" class="card">
+  <div class="logo">🎁 GiftBox</div>
+  <h1>Tạo quà bằng iPhone</h1>
+  <p class="muted">Đăng nhập bằng email. Sau đó bạn có thể tạo từng món quà và nhận link riêng.</p>
+  <input id="email" type="email" placeholder="Email của bạn">
+  <button id="sendBtn">Gửi mã đăng nhập</button>
+  <input id="otp" class="hidden" inputmode="numeric" autocomplete="one-time-code" placeholder="Mã OTP 6 số">
+  <button id="verifyBtn" class="hidden">Xác nhận mã</button>
+  <p id="authMsg"></p>
+</section>
+
+<section id="app" class="card hidden">
+  <div class="row"><div><div class="logo">🎁 GiftBox</div><div class="muted" id="userEmail"></div></div><button class="secondary" id="logout">Đăng xuất</button></div>
+  <h1>Tạo món quà</h1>
+  <form id="giftForm">
+    <input id="recipient" maxlength="100" required placeholder="Tên người nhận">
+    <input id="occasion" maxlength="100" value="Happy Birthday" placeholder="Dịp">
+    <textarea id="message" maxlength="5000" required placeholder="Lời nhắn"></textarea>
+    <label>🖼️ Ảnh</label><input id="photo" type="file" accept="image/*">
+    <label>🎵 Nhạc</label><input id="music" type="file" accept="audio/*">
+    <button id="createBtn">✨ Tạo Gift Box</button>
+  </form>
+  <div id="result" class="card hidden center"></div>
+  <h2>Quà của tôi</h2>
+  <div id="list"></div>
+</section>
+</div>
+
+<script src="config.js"></script>
+<script>
+const cfg=window.GIFTBOX_CONFIG;
+if(!cfg || cfg.SUPABASE_URL.includes("PASTE_")) document.body.insertAdjacentHTML("afterbegin",
+'<div style="padding:12px;background:#5b1616;color:white;text-align:center">Hãy mở config.js và điền Supabase URL + Publishable Key trước.</div>');
+const sb=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+function msg(t,cls=""){ $("authMsg").className=cls;$("authMsg").textContent=t }
+$("sendBtn").onclick=async()=>{
+  const email=$("email").value.trim(); if(!email)return msg("Nhập email trước.");
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
+  if(error)return msg(error.message,"error");
+  $("otp").classList.remove("hidden");$("verifyBtn").classList.remove("hidden");msg("Đã gửi mã. Kiểm tra email.");
+};
+$("verifyBtn").onclick=async()=>{
+  const {data,error}=await sb.auth.verifyOtp({email:$("email").value.trim(),token:$("otp").value.trim(),type:"email"});
+  if(error)return msg(error.message,"error"); showApp(data.user);
+};
+async function showApp(user){$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("userEmail").textContent=user.email;loadGifts()}
+$("logout").onclick=async()=>{await sb.auth.signOut();location.reload()};
+async function upload(file,userId,giftId,type){
+  if(!file)return null;
+  if(file.size>6*1024*1024) throw Error("Ảnh/nhạc tối đa 6MB ở bản V1.");
+  const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const path=`${userId}/${giftId}/${type}.${ext}`;
+  const {error}=await sb.storage.from("gift-media").upload(path,file,{upsert:false,contentType:file.type});
+  if(error)throw error;
+  return sb.storage.from("gift-media").getPublicUrl(path).data.publicUrl;
+}
+$("giftForm").onsubmit=async e=>{
+  e.preventDefault();$("createBtn").disabled=true;$("createBtn").textContent="Đang tạo...";
+  try{
+    const {data:{user}}=await sb.auth.getUser(); if(!user)throw Error("Phiên đăng nhập đã hết.");
+    const id=crypto.randomUUID();
+    let photo_url=null,music_url=null;
+    photo_url=await upload($("photo").files[0],user.id,id,"photo");
+    music_url=await upload($("music").files[0],user.id,id,"music");
+    const {error}=await sb.from("gifts").insert({id,owner_id:user.id,recipient:$("recipient").value.trim(),occasion:$("occasion").value.trim()||"Happy Birthday",message:$("message").value.trim(),photo_url,music_url});
+    if(error)throw error;
+    const url=new URL("gift.html",location.href);url.searchParams.set("id",id);
+    showResult(url.href);$("giftForm").reset();$("occasion").value="Happy Birthday";loadGifts();
+  }catch(err){alert(err.message)}
+  finally{$("createBtn").disabled=false;$("createBtn").textContent="✨ Tạo Gift Box"}
+};
+function showResult(url){$("result").classList.remove("hidden");$("result").innerHTML=`<h2>🎉 Đã tạo món quà!</h2><div class="url">${url}</div><div id="qrcode" class="qr"></div><button onclick="navigator.clipboard.writeText('${url}')">📋 Sao chép link</button><button class="secondary" onclick="location.href='${url}'">Mở món quà</button>`;new QRCode(document.getElementById("qrcode"),{text:url,width:200,height:200})}
+async function loadGifts(){
+ const {data,error}=await sb.from("gifts").select("id,recipient,occasion,created_at").order("created_at",{ascending:false});
+ if(error){$("list").textContent=error.message;return}
+ $("list").innerHTML=data.length?data.map(g=>{const u=new URL("gift.html",location.href);u.searchParams.set("id",g.id);return `<div class="item"><b>${esc(g.recipient)}</b> · ${esc(g.occasion)}<div class="url">${u.href}</div><button onclick="navigator.clipboard.writeText('${u.href}')">Sao chép link</button></div>`}).join(""):'<p class="muted">Chưa có món quà.</p>';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+(async()=>{const {data}=await sb.auth.getUser();if(data.user)showApp(data.user)})();
+</script>
+</body>
+</html>
